@@ -1,0 +1,32 @@
+name: Build & Push Microservices
+
+on:
+  push:
+    branches: [ dev ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [QuoteService, ApiGateway, FrontendApplication]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set Image Name
+        run: |
+          if [[ "${{ matrix.service }}" == "QuoteService" ]]; then echo "IMAGE=quotes" >> $GITHUB_ENV; fi
+          if [[ "${{ matrix.service }}" == "ApiGateway" ]]; then echo "IMAGE=api" >> $GITHUB_ENV; fi
+          if [[ "${{ matrix.service }}" == "FrontendApplication" ]]; then echo "IMAGE=frontend" >> $GITHUB_ENV; fi
+
+      - name: Build Image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/$IMAGE:latest ./${{ matrix.service }} -f ./${{ matrix.service }}/app.dockerfile
+
+      - name: Login DockerHub
+        run: echo ${{ secrets.DOCKER_PASSWORD }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+
+      - name: Push
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/$IMAGE:latest
