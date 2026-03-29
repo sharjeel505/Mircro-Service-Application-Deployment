@@ -88,3 +88,18 @@ resource "helm_release" "argocd" {
     })
   ]
 }
+
+resource "kubernetes_namespace" "microservice_app" {
+  metadata {
+    name = "microservice-application"
+  }
+}
+
+resource "kubernetes_manifest" "bootstrap_app" {
+  manifest = yamldecode(file("/home/ubuntu/Mircro-Service-Application-Deployment/argocd-workload/apps/bootstrap/app-of-apps.yaml"))
+
+  depends_on = [
+    kubernetes_namespace.microservice_app,
+    helm_release.argocd
+  ]
+}
