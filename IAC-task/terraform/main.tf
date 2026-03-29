@@ -1,3 +1,3 @@
 locals {
-  kubeconfig_path = pathexpand("~/.kube/config")
+  kubeconfig_path = pathexpand("/home/ubuntu/.kube/config")
 }
