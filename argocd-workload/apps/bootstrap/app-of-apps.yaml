@@ -11,7 +11,7 @@ spec:
     path: argocd-workload/apps/bootstrap
   destination:
     server: https://kubernetes.default.svc
-    namespace: microservice-application
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
