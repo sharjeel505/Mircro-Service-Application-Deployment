@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "api.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "api.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "api.name" . }}
+      {{- if .Values.configmap.enabled }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- end }}
+        reloader.stakater.com/auto: "true"
+    spec:
+      {{- if .Values.affinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: {{ .Values.affinity.weight }}
+            podAffinityTerm:
+              topologyKey: {{ .Values.affinity.topologyKey }}
+              labelSelector:
+                matchLabels:
+                  app: {{ include "api.name" . }}
+      {{- end }}
+      containers:
+      - name: {{ include "api.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: {{ .Values.service.port }}
+
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+
+        {{- if .Values.configmap.enabled }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.configmap.name }}
+        {{- end }}
+
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.probes.liveness.path }}
+            port: {{ .Values.service.port }}
+          initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.probes.readiness.path }}
+            port: {{ .Values.service.port }}
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
