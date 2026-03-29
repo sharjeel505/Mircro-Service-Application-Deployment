@@ -1,43 +1,144 @@
-# Simple Microservice Example
+# Microservice Application Deployment
 
-A very simple microservice example with NodeJS, Python and Docker
+##  Overview
 
-## Run the API gateway
+Deployed  microservices-based application using:
 
-- Install `docker` and `docker-compose` according to your operating system
+* Docker 
+* Helm (Kubernetes packaging)
+* Kubernetes (k3d cluster)
+* Terraform (infrastructure provisioning)
+* ArgoCD (GitOps deployment apps of apps)
+* GitHub Actions (CI pipeline)
+* Stakater Reloader (auto-restart on config changes)
 
-- Clone the repository and navigate to it
+---
 
-- Run `docker-compose up` to start the services
+## Application Architecture
 
-- Try `GET http://YOUR_HOST:3000/api/status` to check whether application is running
+The application consists of the following microservices:
 
-## Build the frontend
+### 1. Quotes Service
 
-The application uses a frontend written with plain html with jQuery and to style with Bulma.
-This is built with webpack. This default application is built assuming you are using the `localhost`.
+* Backend service (Python)
+* Exposes: 5000
+* Provides quote data
 
-To build this to fit your own **IP Address** please follow the steps before you running the `docker-compose up`
+### 2. API Gateway
 
-- Install NodeJs on your system
+* Node.js service
+* Exposes: 3000
+* Communicates with Quotes service via:
 
-- Go to FrontendApplication directory
+  ```
+  http://quotes:5000
+  ```
 
-- Run `npm install` or if you have yarn `yarn` to install packages
+### 3. Frontend
 
-- Now you need to set the API Gateway for this frontend application. It can be any host you have. 
-    - Let's say you are hosting this application on `http://example.com` then your `API_GATEWAY` would be this one. 
-    - If you are hosting in some machine with IP `123.324.345.1` then your `API_GATEWAY` would be your IP.
+* UI application
+* Exposes: `80`
+* Communicates with API service
 
-- To pass this setting to webpack build you need to set an Environment Variable
-    - Windows : `set API_GATEWAY=http://YOUR_HOST`
-    - Linux/Max : `API_GATEWAY=http://YOUR_HOST`
-    * Remember no / at the end of the URL to get your web app work
+---
 
-- Now you can do `npm run build` or `yarn build`
+## Implementation Approach
 
-- Check `dist/` folder for newly created index.html and the main.js
+### Step 1: Code Analysis
 
-- Now run the `docker-compose up` on the root folder of project and check `http://YOUR_HOST:8080` to see web app 
+* Analyzed Dockerfiles for all services
+* Reviewed docker-compose.yml to understand:
 
-![image](https://user-images.githubusercontent.com/13379595/42726706-82eb0ae6-87b6-11e8-8456-d933b9dfa73b.png)
+  * Service dependencies
+  * Ports
+  * Environment variables
+
+---
+
+### Step 2: Containerization
+
+* Built Docker images for:
+
+  * Quotes
+  * API
+  * Frontend
+* Pushed images to DockerHub using github CI : https://hub.docker.com/repositories/sharjeel206
+
+
+---
+
+### Step 3: Helm Chart Creation
+
+Used:
+
+```bash
+helm create quotes
+helm create api
+helm create frontend
+```
+
+Then customized each chart:
+
+---
+
+## Helm Chart Features
+
+Each microservice includes:
+
+### Deployment
+
+* Configurable replicas
+* Resource limits (CPU/Memory)
+* Pod anti-affinity for distribution
+
+### Service
+
+* ClusterIP for internal services
+* LoadBalancer for frontend (if required)
+
+### ConfigMap
+
+* Used for API service 
+
+---
+
+### Probes (Health Checks for API Health)
+
+```yaml
+probes:
+  liveness:
+    path: /api/status
+    initialDelaySeconds: 10
+  readiness:
+    path: /api/status
+    initialDelaySeconds: 5
+
+```
+
+---
+
+### Horizontal Pod Autoscaler (HPA)
+
+* Implemented for:
+
+  * API
+  * Frontend
+
+* Based on CPU utilization:
+
+  ```yaml
+  averageUtilization: 70
+  ```
+
+---
+
+### Pod Distribution
+
+Used **podAntiAffinity**:
+
+* Ensures pods are distributed across nodes
+* Improves availability and resilience
+
+---
+
+
