@@ -7,13 +7,10 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/sharjeel505/Mircro-Service-Application-Deployment.git'
+    path: argocd-workload/apps/quotes/helm-chart
     targetRevision: dev
-    path: argocd-workload/apps/api/helm-chart
-    helm:
-      valueFiles:
-        - values.yaml
   destination:
-    server: https://kubernetes.default.svc
+    server: 'https://kubernetes.default.svc'
     namespace: microservice-application
   syncPolicy:
     automated:

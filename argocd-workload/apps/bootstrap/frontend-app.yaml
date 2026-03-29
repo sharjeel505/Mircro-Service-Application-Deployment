@@ -1,19 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: quotes
+  name: api
   namespace: argocd
 spec:
   project: default
   source:
     repoURL: 'https://github.com/sharjeel505/Mircro-Service-Application-Deployment.git'
+    path: argocd-workload/apps/frontend/helm-chart
     targetRevision: dev
-    path: argocd-workload/apps/quotes/helm-chart
-    helm:
-      valueFiles:
-        - values.yaml
   destination:
-    server: https://kubernetes.default.svc
+    server: 'https://kubernetes.default.svc'
     namespace: microservice-application
   syncPolicy:
     automated:
