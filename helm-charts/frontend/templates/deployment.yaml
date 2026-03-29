@@ -53,4 +53,4 @@ spec:
           httpGet:
             path: {{ .Values.probes.readiness.path }}
             port: {{ .Values.service.targetPort }}
-          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+          initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }} 
